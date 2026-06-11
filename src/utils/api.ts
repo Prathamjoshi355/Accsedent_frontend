@@ -1,6 +1,6 @@
 import { loadState, saveState, clearState } from './storage'
 
-const rawBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE || 'http://localhost:4000'
+const rawBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE || 'http://localhost:4000'|| 'accsedent-backend.vercel.app'
 const BASE_URL = rawBaseUrl.replace(/\/+$|\s+/g, '')
 
 function getAuthHeaders() {
