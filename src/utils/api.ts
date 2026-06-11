@@ -1,6 +1,7 @@
 import { loadState, saveState, clearState } from './storage'
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE || 'http://localhost:4000'
+const rawBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE || 'http://localhost:4000'
+const BASE_URL = rawBaseUrl.replace(/\/+$|\s+/g, '')
 
 function getAuthHeaders() {
   const token = loadState('token')
@@ -14,7 +15,7 @@ export async function apiFetch(path, options = {}) {
       endpoint = `/api${endpoint}`
     }
   }
-  const url = `${BASE_URL}${endpoint}`
+  const url = `${BASE_URL}${endpoint.replace(/^\/+/, '/')}`
   const init = {
     headers: {
       'Content-Type': 'application/json',
