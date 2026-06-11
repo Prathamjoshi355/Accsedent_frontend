@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
-import { saveToken } from '../utils/api'
+import { apiFetch, saveToken } from '../utils/api'
 import { saveState } from '../utils/storage'
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000'
 
 export default function LoginPanel({ onLogin }: any) {
   const [email, setEmail] = useState('')
@@ -12,36 +10,32 @@ export default function LoginPanel({ onLogin }: any) {
 
   const requestOtp = async () => {
     if (!email) return setMessage('Enter an email address')
-    const res = await fetch(`${API_BASE}/auth/request-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, debug: true })
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setMessage(data.error || 'Unable to send OTP')
-      return
+    try {
+      const data = await apiFetch('/auth/request-otp', {
+        method: 'POST',
+        body: { email, debug: true }
+      })
+      setStep('verify')
+      setOtp(data.debugCode || '')
+      setMessage(data.debugCode ? `Test OTP: ${data.debugCode}` : 'OTP sent. Check your inbox.')
+    } catch (err: any) {
+      setMessage(err?.error || 'Unable to send OTP')
     }
-    setStep('verify')
-    setOtp(data.debugCode || '')
-    setMessage(data.debugCode ? `Test OTP: ${data.debugCode}` : 'OTP sent. Check your inbox.')
   }
 
   const verifyOtp = async () => {
     if (!otp) return setMessage('Enter the OTP code')
-    const res = await fetch(`${API_BASE}/auth/verify-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code: otp })
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setMessage(data.error || 'OTP verification failed')
-      return
+    try {
+      const data = await apiFetch('/auth/verify-otp', {
+        method: 'POST',
+        body: { email, code: otp }
+      })
+      saveToken(data.token)
+      saveState('user', data.user)
+      onLogin(data.user)
+    } catch (err: any) {
+      setMessage(err?.error || 'OTP verification failed')
     }
-    saveToken(data.token)
-    saveState('user', data.user)
-    onLogin(data.user)
   }
 
   return (

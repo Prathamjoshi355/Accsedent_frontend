@@ -1,6 +1,6 @@
 import { loadState, saveState, clearState } from './storage'
 
-const BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:4000'
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE || 'http://localhost:4000'
 
 function getAuthHeaders() {
   const token = loadState('token')
