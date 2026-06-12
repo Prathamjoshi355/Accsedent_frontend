@@ -1,6 +1,6 @@
 import { loadState, saveState, clearState } from './storage'
 
-const rawBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE || 'http://localhost:4000'|| 'https://accsedent-backend.onrender.com'
+const rawBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE || 'https://accsedent-backend.onrender.com'
 const BASE_URL = rawBaseUrl.replace(/\/+$|\s+/g, '')
 
 function getAuthHeaders() {
