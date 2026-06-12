@@ -1,54 +1,67 @@
-import { loadState, saveState, clearState } from './storage'
+import { loadState, saveState, clearState } from './storage';
 
-const rawBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE || 'https://accsedent-backend.onrender.com'
-const BASE_URL = rawBaseUrl.replace(/\/+$|\s+/g, '')
+const BASE_URL = (
+  import.meta.env.VITE_BACKEND_URL ||
+  import.meta.env.VITE_API_BASE ||
+  'https://accsedent-backend.vercel.app'
+).replace(/\/+$/, '');
 
-function getAuthHeaders() {
-  const token = loadState('token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
+function getAuthHeaders(): Record<string, string> {
+  const token = loadState('token');
+
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function apiFetch(path, options = {}) {
-  let endpoint = path
-  if (typeof endpoint === 'string' && endpoint.startsWith('/')) {
-    if (!endpoint.startsWith('/api') && !endpoint.startsWith('/auth')) {
-      endpoint = `/api${endpoint}`
+export async function apiFetch(path: string, options: RequestInit = {}): Promise<unknown> {
+  const endpoint =
+    path.startsWith('/api') || path.startsWith('/auth')
+      ? path
+      : `/api${path.startsWith('/') ? path : `/${path}`}`;
+
+  const url = `${BASE_URL}${endpoint}`;
+
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    ...getAuthHeaders()
+  });
+
+  if (options.headers) {
+    new Headers(options.headers).forEach((value, key) => headers.set(key, value));
+  }
+
+  const config: RequestInit = {
+    ...options,
+    headers
+  };
+
+  if (config.body != null && typeof config.body !== 'string') {
+    config.body = JSON.stringify(config.body);
+  }
+
+  try {
+    const response = await fetch(url, config);
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        ...data
+      };
     }
+
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
   }
-  const url = `${BASE_URL}${endpoint.replace(/^\/+/, '/')}`
-  const init = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-      ...(options.headers || {})
-    },
-    ...options
-  }
-  if (options.body && typeof options.body !== 'string') {
-    init.body = JSON.stringify(options.body)
-  }
-  const res = await fetch(url, init)
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw data
-  return data
 }
 
-export function saveToken(token) {
-  saveState('token', token)
-}
+// Token helpers
+export const saveToken = (token: string) => saveState('token', token);
+export const clearToken = () => clearState('token');
 
-export function clearToken() {
-  clearState('token')
-}
-
-export function saveUser(user) {
-  saveState('user', user)
-}
-
-export function loadUser() {
-  return loadState('user')
-}
-
-export function clearUser() {
-  clearState('user')
-}
+// User helpers
+export const saveUser = (user: unknown) => saveState('user', user);
+export const loadUser = () => loadState('user');
+export const clearUser = () => clearState('user');
